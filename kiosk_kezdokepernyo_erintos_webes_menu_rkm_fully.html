@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kijelző indító menü</title>
+<style>
+  :root{
+    --bg:#0b0f14; --card:#121821; --muted:#7e8aa2; --accent:#3aa5ff; --ok:#10b981; --warn:#f59e0b; --danger:#ef4444; --text:#e6eefb;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b0f14,#0a0d12);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{display:flex;flex-direction:column;min-height:100%}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:rgba(18,24,33,.7);backdrop-filter:blur(6px);position:sticky;top:0}
+  header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.3px}
+  #device{font-size:12px;color:var(--muted)}
+  main{flex:1;display:grid;gap:16px;padding:20px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .tile{position:relative;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);padding:18px;min-height:120px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,.25);cursor:pointer;transition:transform .08s ease-out}
+  .tile:hover{transform:translateY(-2px)}
+  .tile .title{font-size:18px;font-weight:700;line-height:1.2}
+  .tile .sub{font-size:13px;color:var(--muted);margin-top:6px}
+  .badge{position:absolute;top:12px;right:12px;font-size:11px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+  footer{padding:10px 16px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:10px;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06)}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;color:#091016;background:var(--text)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.2)}
+  .flex{display:flex;gap:10px;align-items:center}
+  .hidden{display:none}
+  /* Overlays */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:50}
+  .card{width:min(920px,92vw);max-height:90vh;overflow:auto;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .card header{position:sticky;top:0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .card .content{padding:18px}
+  .row{display:grid;gap:8px;margin-bottom:12px}
+  .row.cols{grid-template-columns:1fr 1fr}
+  label{font-size:12px;color:var(--muted)}
+  input, textarea, select{width:100%;background:#0e141c;color:var(--text);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px}
+  textarea{min-height:160px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;font-size:12px}
+  .countdown{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0e141c;border:1px solid rgba(255,255,255,.16);color:var(--text);padding:10px 14px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:40}
+  .corner{position:fixed;width:90px;height:90px;z-index:30}
+  .corner.tr{top:0;right:0}
+  .corner.tl{top:0;left:0}
+  .corner.br{bottom:0;right:0}
+  .corner.bl{bottom:0;left:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Indító menü</h1>
+    <div id="device">Eszköz: betöltés…</div>
+  </header>
+  <main id="grid"></main>
+  <footer>
+    <div class="flex">
+      <span>Hosszú nyomás a jobb felső sarokban → <strong>Admin</strong></span>
+    </div>
+    <div class="flex">
+      <button id="btnCancelAutostart" class="btn ghost hidden">Autostart megszakítása</button>
+      <button id="btnAdmin" class="btn ghost">Admin</button>
+    </div>
+  </footer>
+</div>
+
+<!-- Admin overlay -->
+<div id="admin" class="overlay hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <header>
+      <h1>Admin beállítások</h1>
+      <div class="flex">
+        <button class="btn ghost" onclick="adminClose()">Bezár</button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="row cols">
+        <div>
+          <label>Eszköz név (opcionális, felülírja a Fully-ból olvasottat)</label>
+          <input id="inpDeviceName" placeholder="pl. BATHORI-01" />
+        </div>
+        <div>
+          <label>PIN kód (Adminhoz)</label>
+          <input id="inpPin" type="password" placeholder="4-6 számjegy" />
+        </div>
+      </div>
+      <div class="row">
+        <label>Menüpontok (JSON lista: title, sub, url)</label>
+        <textarea id="inpItems" spellcheck="false"></textarea>
+      </div>
+      <div class="row cols">
+        <div>
+          <label>Automatikus indítás indexe (–1 = kikapcsolva)</label>
+          <input id="inpAutostart" type="number" min="-1" />
+        </div>
+        <div>
+          <label>Késleltetés autostarthoz (másodperc)</label>
+          <input id="inpDelay" type="number" min="0" />
+        </div>
+      </div>
+      <div class="row cols">
+        <div>
+          <label>Heartbeat URL (opcionális – GET hívás 60 mp-enként)</label>
+          <input id="inpHeartbeat" placeholder="https://example.hu/hb" />
+        </div>
+        <div>
+          <label>Eszköz azonosító paraméter neve</label>
+          <input id="inpHeartbeatKey" placeholder="device" />
+        </div>
+      </div>
+      <div class="flex" style="justify-content:space-between;margin-top:8px">
+        <button class="btn ghost" onclick="resetDefaults()">Gyári alapértékek</button>
+        <div class="flex">
+          <button class="btn ghost" onclick="exportConfig()">Export</button>
+          <button class="btn" onclick="saveConfig()">Mentés</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pinAsk" class="overlay hidden">
+  <div class="card">
+    <header>
+      <h1>PIN szükséges</h1>
+      <div class="flex"><button class="btn ghost" onclick="hidePin()">Mégse</button></div>
+    </header>
+    <div class="content">
+      <div class="row cols">
+        <div>
+          <label>PIN</label>
+          <input id="pinInput" type="password" inputmode="numeric" placeholder="••••" />
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn" onclick="checkPin()">Belépés</button>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:12px">Alap PIN: <code>2468</code> (cseréld le!)</p>
+    </div>
+  </div>
+</div>
+
+<div id="countdown" class="countdown hidden"></div>
+<div class="corner tr" id="cornerTR"></div>
+<div class="corner tl" id="cornerTL"></div>
+<div class="corner br" id="cornerBR"></div>
+<div class="corner bl" id="cornerBL"></div>
+
+<script>
+/* ----------------------- Konfiguráció és állapot ------------------------ */
+const DEFAULTS = {
+  pin: "2468",
+  deviceName: "",
+  items: [
+    { title: "Alap tartalom", sub: "Nyitó képernyő / fő stream", url: "https://example.com/display/home" },
+    { title: "Kampány A", sub: "Szezonális animáció", url: "https://example.com/display/campaignA" },
+    { title: "Kampány B", sub: "Videó loop 1080p", url: "https://example.com/display/campaignB" },
+    { title: "Statikus poszter", sub: "Kis terhelés", url: "https://example.com/display/poster" }
+  ],
+  autostartIndex: -1,
+  autostartDelaySec: 8,
+  heartbeatUrl: "",
+  heartbeatKey: "device"
+};
+
+const STATE = {
+  config: loadConfig(),
+  holdTimer: null,
+  autostartTimer: null,
+  remaining: 0,
+  deviceLabel: ""
+};
+
+function loadConfig(){
+  try{ const j = localStorage.getItem("kiosk.config"); return j? JSON.parse(j): structuredClone(DEFAULTS);}catch(e){return structuredClone(DEFAULTS)}
+}
+function persist(){ localStorage.setItem("kiosk.config", JSON.stringify(STATE.config)); }
+
+/* ----------------------- Eszköz azonosító (Fully / query) --------------- */
+function detectDeviceLabel(){
+  // 1) URL param ?device=NEV
+  const u = new URL(location.href);
+  const p = u.searchParams.get("device");
+  if(p) return p;
+  // 2) Fully Kiosk API (ha elérhető)
+  try{ if(window.FullyKiosk){ const id = FullyKiosk.getDeviceId?.() || ""; const name = FullyKiosk.getDeviceName?.() || ""; return name || id || ""; } }catch(e){}
+  // 3) Konfig felülírás
+  if(STATE?.config?.deviceName) return STATE.config.deviceName;
+  return "ISMERETLEN";
+}
+
+/* ----------------------- Rács renderelése ------------------------------- */
+function render(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  STATE.config.items.forEach((it, idx)=>{
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.innerHTML = `<div class="badge">#${idx+1}</div>
+      <div class="title">${escapeHtml(it.title)}</div>
+      <div class="sub">${escapeHtml(it.sub||'')}</div>
+      <div class="sub" style="opacity:.6">${escapeHtml(it.url)}</div>`;
+    el.addEventListener('click', ()=> launch(idx));
+    grid.appendChild(el);
+  });
+  document.getElementById('device').textContent = 'Eszköz: ' + (STATE.deviceLabel||'ismeretlen');
+  setupAutostart();
+}
+
+function escapeHtml(s){ return (s+"").replace(/[&<>\"]/g, m=>({"&":"&amp;","<":"&lt;",
+  ">":"&gt;","\"":"&quot;"}[m])); }
+
+/* ----------------------- Indítás / Autostart ---------------------------- */
+function launch(index){
+  const it = STATE.config.items[index];
+  if(!it) return;
+  cancelAutostart();
+  // Fully specifikus API: új URL betöltése
+  try{
+    if(window.FullyKiosk && FullyKiosk.loadUrl){ FullyKiosk.loadUrl(it.url); return; }
+  }catch(e){}
+  // Standard böngésző fallback
+  location.href = it.url;
+}
+
+function setupAutostart(){
+  const i = Number(STATE.config.autostartIndex);
+  const d = Number(STATE.config.autostartDelaySec);
+  const btn = document.getElementById('btnCancelAutostart');
+  if(i>=0 && STATE.config.items[i]){
+    STATE.remaining = d;
+    const cd = document.getElementById('countdown');
+    cd.classList.remove('hidden');
+    btn.classList.remove('hidden');
+    tick();
+    STATE.autostartTimer = setInterval(()=>{
+      STATE.remaining--; tick();
+      if(STATE.remaining<=0){ cancelAutostart(); launch(i); }
+    },1000);
+  }else{
+    btn.classList.add('hidden');
+    document.getElementById('countdown').classList.add('hidden');
+  }
+}
+function tick(){ document.getElementById('countdown').textContent = `Automatikus indítás ${STATE.remaining} mp múlva…`; }
+function cancelAutostart(){
+  const btn = document.getElementById('btnCancelAutostart');
+  btn.classList.add('hidden');
+  document.getElementById('countdown').classList.add('hidden');
+  if(STATE.autostartTimer){ clearInterval(STATE.autostartTimer); STATE.autostartTimer=null; }
+}
+
+document.getElementById('btnCancelAutostart').addEventListener('click', cancelAutostart);
+
+/* ----------------------- Admin elérés (PIN + hosszú nyomás) ------------- */
+let holdStart = 0; let holdTarget = null;
+function bindHold(el, onLong){
+  el.addEventListener('pointerdown', e=>{ holdStart = Date.now(); holdTarget=e.target; STATE.holdTimer=setTimeout(()=>{ onLong(); }, 1300); });
+  const clear=()=>{ if(STATE.holdTimer){ clearTimeout(STATE.holdTimer); STATE.holdTimer=null; } };
+  el.addEventListener('pointerup', clear); el.addEventListener('pointerleave', clear); el.addEventListener('pointercancel', clear);
+}
+
+bindHold(document.getElementById('cornerTR'), askPin);
+// Alternatív: gomb a láblécben
+ document.getElementById('btnAdmin').addEventListener('click', askPin);
+
+function askPin(){
+  document.getElementById('pinInput').value='';
+  document.getElementById('pinAsk').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('pinInput').focus(), 50);
+}
+function hidePin(){ document.getElementById('pinAsk').classList.add('hidden'); }
+function checkPin(){
+  const v = (document.getElementById('pinInput').value||'').trim();
+  if(v === (STATE.config.pin+'')){
+    hidePin(); openAdmin();
+  }else{ alert('Hibás PIN'); }
+}
+
+/* ----------------------- Admin panel ----------------------------- */
+function openAdmin(){
+  // töltés UI-ba
+  document.getElementById('inpDeviceName').value = STATE.config.deviceName||'';
+  document.getElementById('inpPin').value = STATE.config.pin||'';
+  document.getElementById('inpItems').value = JSON.stringify(STATE.config.items, null, 2);
+  document.getElementById('inpAutostart').value = STATE.config.autostartIndex;
+  document.getElementById('inpDelay').value = STATE.config.autostartDelaySec;
+  document.getElementById('inpHeartbeat').value = STATE.config.heartbeatUrl||'';
+  document.getElementById('inpHeartbeatKey').value = STATE.config.heartbeatKey||'device';
+  document.getElementById('admin').classList.remove('hidden');
+}
+function adminClose(){ document.getElementById('admin').classList.add('hidden'); }
+
+function saveConfig(){
+  try{
+    const items = JSON.parse(document.getElementById('inpItems').value);
+    STATE.config.items = items;
+  }catch(e){ alert('Hibás JSON a menüpontoknál'); return; }
+  const pin = (document.getElementById('inpPin').value||'').trim();
+  STATE.config.pin = pin || STATE.config.pin;
+  STATE.config.deviceName = (document.getElementById('inpDeviceName').value||'').trim();
+  STATE.config.autostartIndex = Number(document.getElementById('inpAutostart').value||-1);
+  STATE.config.autostartDelaySec = Number(document.getElementById('inpDelay').value||8);
+  STATE.config.heartbeatUrl = (document.getElementById('inpHeartbeat').value||'').trim();
+  STATE.config.heartbeatKey = (document.getElementById('inpHeartbeatKey').value||'device').trim();
+  persist(); adminClose(); cancelAutostart(); render();
+}
+function resetDefaults(){ if(confirm('Biztosan visszaállítod az alapbeállításokat?')){ STATE.config = structuredClone(DEFAULTS); persist(); render(); adminClose(); } }
+function exportConfig(){
+  const blob = new Blob([JSON.stringify(STATE.config,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download='kiosk-config.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ----------------------- Heartbeat (opcionális) ------------------------- */
+function heartbeat(){
+  if(!STATE.config.heartbeatUrl) return; // nincs beállítva
+  const url = new URL(STATE.config.heartbeatUrl);
+  const key = STATE.config.heartbeatKey || 'device';
+  url.searchParams.set(key, STATE.deviceLabel||'unknown');
+  url.searchParams.set('ts', Date.now());
+  fetch(url.toString(), { method:'GET', mode:'no-cors' }).catch(()=>{});
+}
+
+/* ----------------------- Init ------------------------------------------- */
+(function init(){
+  STATE.deviceLabel = detectDeviceLabel() || (STATE.config.deviceName||'');
+  render();
+  // Heartbeat 60 mp-enként
+  setInterval(heartbeat, 60000);
+  setTimeout(heartbeat, 2000);
+})();
+</script>
+</body>
+</html>
