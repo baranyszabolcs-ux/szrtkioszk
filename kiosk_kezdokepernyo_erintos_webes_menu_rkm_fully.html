@@ -3,68 +3,121 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Főmenü</title>
+  <title>SzivarTorony eredményközlő terminál</title>
+  <meta name="description" content="Csempés főmenü – kijelző tartalmak gyors indítása" />
   <style>
-    :root{--bg:#0b0f14;--tile:#131a23;--tile2:#0f141c;--text:#e7eef8;--muted:#96a2b6;--focus:#3aa5ff}
-    html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 20% 10%,#0e141c,transparent),linear-gradient(#0a0e14,#0a0d12);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,14,20,.6);backdrop-filter:blur(6px);position:sticky;top:0}
-    header h1{margin:0;font-size:18px;letter-spacing:.3px}
-    #container{max-width:1200px;margin:0 auto;padding:22px}
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
-    .tile{display:block;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:18px;min-height:120px;text-decoration:none;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .08s ease-out, box-shadow .15s}
-    .tile:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(0,0,0,.35)}
-    .tile:focus{outline:2px solid var(--focus);outline-offset:3px}
-    .title{font-size:18px;font-weight:700;line-height:1.2}
-    .sub{font-size:13px;color:var(--muted);margin-top:6px}
-    footer{padding:10px 22px;color:var(--muted);font-size:12px;border-top:1px solid rgba(255,255,255,.06)}
-    /* nagy érintő felületekhez */
-    @media (pointer: coarse){ .tile{min-height:140px;padding:22px} .title{font-size:20px} }
+    :root{
+      --bg0:#070a10; --bg1:#0b111a; --bg2:#0e1622;
+      --card:#111a26; --stroke:rgba(255,255,255,.10);
+      --text:#e9f0fb; --muted:#9aa7bd; --accent:#5cc8ff; --glow:#7ad8ff33;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:
+      radial-gradient(1200px 600px at 10% -10%, #0d1522 0%, transparent 60%),
+      radial-gradient(900px 700px at 110% 10%, #0a1220 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg0), var(--bg1) 40%, var(--bg2));
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      display:grid;place-items:center;min-height:100vh;
+    }
+    .shell{width:min(1200px, 94vw);}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:18px 22px;margin:22px auto 16px;
+      border:1px solid var(--stroke);border-radius:18px;
+      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+      box-shadow:0 20px 70px var(--glow);
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:36px;height:36px;border-radius:10px;background:
+      conic-gradient(from 210deg, #66d1ff, #3aa5ff, #4d7cff, #2aa0ff);
+      box-shadow:0 6px 24px #2aa0ff55;
+    }
+    .title{line-height:1.1}
+    .title h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.2px}
+    .subtitle{margin:2px 0 0;color:var(--muted);font-size:12px}
+
+    .grid-wrap{display:grid;place-items:center}
+    .grid{display:grid;gap:18px;justify-content:center;align-content:center;
+      grid-template-columns:repeat(auto-fit,minmax(220px, 1fr));
+      width:100%;
+    }
+    .tile{display:block; text-decoration:none; color:var(--text);
+      padding:18px; min-height:130px; border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--stroke);
+      box-shadow:0 14px 40px rgba(0,0,0,.35);
+      transition:transform .08s ease-out, box-shadow .15s;
+    }
+    .tile:hover{transform:translateY(-2px); box-shadow:0 22px 60px rgba(0,0,0,.45)}
+    .tile:focus{outline:2px solid var(--accent); outline-offset:4px}
+    .kicker{font-size:11px; letter-spacing:.2px; color:var(--muted); text-transform:uppercase}
+    .t{font-size:18px;font-weight:800;margin-top:6px}
+    .s{font-size:13px;color:var(--muted);margin-top:6px}
+
+    footer{margin:16px auto 24px; color:var(--muted); font-size:12px; text-align:center}
+
+    /* nagy érintőképernyőkhöz */
+    @media (pointer:coarse){
+      .tile{min-height:150px;padding:22px}
+      .t{font-size:20px}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Főmenü</h1>
-    <div id="device"></div>
-  </header>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">
+          <h1>SzivarTorony eredményközlő terminál</h1>
+          <p class="subtitle">Válaszd ki a futtatandó tartalmat</p>
+        </div>
+      </div>
+      <div id="device" class="subtitle"></div>
+    </header>
 
-  <div id="container">
-    <div class="grid" id="menu">
-      <!-- CSEMPE PÉLDÁK: csak a href-et és a címeket írd át -->
-      <a class="tile" href="https://example.com/display/home" target="_self">
-        <div class="title">Alap tartalom</div>
-        <div class="sub">Nyitó képernyő / fő stream</div>
-      </a>
-      <a class="tile" href="https://example.com/display/campaignA" target="_self">
-        <div class="title">Kampány A</div>
-        <div class="sub">Szezonális animáció</div>
-      </a>
-      <a class="tile" href="https://example.com/display/campaignB" target="_self">
-        <div class="title">Kampány B</div>
-        <div class="sub">Videó loop 1080p</div>
-      </a>
-      <a class="tile" href="https://example.com/display/poster" target="_self">
-        <div class="title">Statikus poszter</div>
-        <div class="sub">Kis terhelés</div>
-      </a>
+    <div class="grid-wrap">
+      <nav class="grid" id="menu">
+        <!-- CSEMPEK – a megadott linkek mind külön menüpont -->
+        <a class="tile" href="http://schedulerzrh.aitcloud.de/retail_scheduler/display/index/schedule:13a92cec0a3b58c3944f2e4b0f2c1ef6" target="_self">
+          <div class="kicker">Retail Scheduler</div>
+          <div class="t">Ütemezett tartalom #1</div>
+          <div class="s">Központi lejátszási lista</div>
+        </a>
+        <a class="tile" href="http://schedulerzrh.aitcloud.de/retail_scheduler/display/index/schedule:f94efd4aed2cae288d1ab3abaf828b38" target="_self">
+          <div class="kicker">Retail Scheduler</div>
+          <div class="t">Ütemezett tartalom #2</div>
+          <div class="s">Központi lejátszási lista</div>
+        </a>
+        <a class="tile" href="https://lottoeredmeny.azurewebsites.net/putto.html" target="_self">
+          <div class="kicker">Lottóeredmény</div>
+          <div class="t">Puttó</div>
+          <div class="s">Élő/legutóbbi eredmények</div>
+        </a>
+        <a class="tile" href="https://lottoeredmeny.azurewebsites.net/egykep.html" target="_self">
+          <div class="kicker">Lottóeredmény</div>
+          <div class="t">Egylapos nézet</div>
+          <div class="s">Egy képernyős összefoglaló</div>
+        </a>
+        <a class="tile" href="https://lottoeredmeny.azurewebsites.net/topeu.html" target="_self">
+          <div class="kicker">Lottóeredmény</div>
+          <div class="t">Top EU</div>
+          <div class="s">Európai toplista nézet</div>
+        </a>
+      </nav>
     </div>
+
+    <footer>
+      Tipp: indítsd ezt az oldalt a Fully Kioskban és add meg a <code>?device=NEV</code> paramétert az eszköz azonosításához.
+    </footer>
   </div>
 
-  <footer>
-    Tipp: a csempék <code>href</code> értékét cseréld a saját URL-jeidre. Ha szeretnéd, a cél URL-hez automatikusan hozzáfűzhetjük az eszköz azonosítóját is (pl. <code>?device=BATHORI-01</code>).
-  </footer>
-
   <script>
-    // (Opcionális) Eszköz azonosító kiírása a fejlécbe URL param alapján: ?device=NEV
-    const p = new URL(location.href).searchParams.get('device');
-    if(p) document.getElementById('device').textContent = 'Eszköz: ' + p;
-
-    // (Opcionális) Ha szeretnéd, a cél linkekhez automatikusan fűzzük hozzá a ?device= paramétert:
-    const PROPAGATE_DEVICE = false; // állítsd true-ra ha kell
-    if(PROPAGATE_DEVICE && p){
-      document.querySelectorAll('#menu a.tile').forEach(a=>{
-        try{ const u = new URL(a.href); u.searchParams.set('device', p); a.href = u.toString(); }catch(e){}
-      });
-    }
+    // Opcionális: eszköznév kiírása a fejlécben (?device=...)
+    const dev = new URL(location.href).searchParams.get('device');
+    if(dev){ document.getElementById('device').textContent = 'Eszköz: ' + dev; }
   </script>
 </body>
 </html>
+
