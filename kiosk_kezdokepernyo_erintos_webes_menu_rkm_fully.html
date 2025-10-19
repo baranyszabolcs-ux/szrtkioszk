@@ -115,11 +115,7 @@
   </div>
 </div>
 
-<div id="pinAsk" class="overlay hidden">
-  <div class="card">
-    <header>
-      <h1>PIN szükséges</h1>
-      <div class="flex"><button class="btn ghost" onclick="hidePin()">Mégse</button></div>
+<!-- PIN overlay ideiglenesen eltávolítva (PIN nélküli admin mód) -->
     </header>
     <div class="content">
       <div class="row cols">
@@ -279,21 +275,13 @@ function bindHold(el, onLong){
   el.addEventListener('pointerup', clear); el.addEventListener('pointerleave', clear); el.addEventListener('pointercancel', clear);
 }
 
-bindHold(document.getElementById('cornerTR'), askPin);
+bindHold(document.getElementById('cornerTR'), openAdmin);
 // Alternatív: gomb a láblécben
- document.getElementById('btnAdmin').addEventListener('click', askPin);
+ document.getElementById('btnAdmin').addEventListener('click', openAdmin);
 
-function askPin(){
-  document.getElementById('pinInput').value='';
-  document.getElementById('pinAsk').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('pinInput').focus(), 50);
-}
-function hidePin(){ document.getElementById('pinAsk').classList.add('hidden'); }
-function checkPin(){
-  const v = (document.getElementById('pinInput').value||'').trim();
-  if(v === (STATE.config.pin+'')){
-    hidePin(); openAdmin();
-  }else{ alert('Hibás PIN'); }
+function askPin(){ openAdmin(); }
+function hidePin(){}
+function checkPin(){ openAdmin(); }else{ alert('Hibás PIN'); }
 }
 
 /* ----------------------- Admin panel ----------------------------- */
