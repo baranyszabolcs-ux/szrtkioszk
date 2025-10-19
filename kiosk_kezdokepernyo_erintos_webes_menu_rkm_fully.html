@@ -125,7 +125,7 @@
       <div class="row cols">
         <div>
           <label>PIN</label>
-          <input id="pinInput" type="password" inputmode="numeric" placeholder="••••" />
+          <input id="pinInput" type="password" inputmode="numeric" placeholder="••••" onkeydown="if(event.key==='Enter'){checkPin()}" />
         </div>
         <div style="display:flex;align-items:flex-end">
           <button class="btn" onclick="checkPin()">Belépés</button>
@@ -158,6 +158,29 @@ const DEFAULTS = {
   heartbeatUrl: "",
   heartbeatKey: "device"
 };
+
+// Biztonságos deep-clone minden böngészőn
+function clone(obj){
+  try{
+    if (typeof structuredClone === 'function') return structuredClone(obj);
+  }catch(e){}
+  try{ return JSON.parse(JSON.stringify(obj)); }catch(e){ return obj; }
+}
+
+function safeGetLS(key){
+  try{ return window.localStorage ? localStorage.getItem(key) : null; }catch(e){ return null; }
+}
+function safeSetLS(key, val){
+  try{ if(window.localStorage){ localStorage.setItem(key, val); } }catch(e){}
+}
+
+function loadConfig(){
+  try{
+    const j = safeGetLS("kiosk.config");
+    return j ? JSON.parse(j) : clone(DEFAULTS);
+  }catch(e){ return clone(DEFAULTS); }
+}
+function persist(){ safeSetLS("kiosk.config", JSON.stringify(STATE.config)); }
 
 const STATE = {
   config: loadConfig(),
@@ -301,7 +324,7 @@ function saveConfig(){
   STATE.config.heartbeatKey = (document.getElementById('inpHeartbeatKey').value||'device').trim();
   persist(); adminClose(); cancelAutostart(); render();
 }
-function resetDefaults(){ if(confirm('Biztosan visszaállítod az alapbeállításokat?')){ STATE.config = structuredClone(DEFAULTS); persist(); render(); adminClose(); } }
+function resetDefaults(){ if(confirm('Biztosan visszaállítod az alapbeállításokat?')){ STATE.config = clone(DEFAULTS); persist(); render(); adminClose(); } } }
 function exportConfig(){
   const blob = new Blob([JSON.stringify(STATE.config,null,2)], {type:'application/json'});
   const a = document.createElement('a');
